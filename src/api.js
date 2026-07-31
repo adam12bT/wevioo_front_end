@@ -1,4 +1,8 @@
-const BASE = "/api";
+// Backend base URL — comes from a Vite env var so it's swappable per
+// environment (local dev vs. the deployed HF Space) without code changes.
+// Falls back to "/api" for local dev if you're still proxying through
+// Vite's dev server (see vite.config.js note below).
+const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 async function handle(res) {
   if (!res.ok) {
