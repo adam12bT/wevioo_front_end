@@ -9,12 +9,13 @@ import ResearchPanel from "./components/ResearchPanel.jsx";
 import ProposalPanel from "./components/ProposalPanel.jsx";
 import QualityPanel from "./components/QualityPanel.jsx";
 import KnowledgeBase from "./components/KnowledgeBase.jsx";
+import RunHistory from "./components/RunHistory.jsx";
 import UploadDropzone from "./components/UploadDropzone.jsx";
 
 const ACTIVE_STATUSES = new Set(["queued", "running"]);
 
 export default function App() {
-  const [view, setView] = useState("pipeline"); // "pipeline" | "knowledge"
+  const [view, setView] = useState("pipeline"); // "pipeline" | "knowledge" | "history"
   const [runs, setRuns] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [runDetail, setRunDetail] = useState(null);
@@ -97,6 +98,12 @@ export default function App() {
           >
             Knowledge base
           </button>
+          <button
+            className={`top-bar__tab ${view === "history" ? "top-bar__tab--active" : ""}`}
+            onClick={() => setView("history")}
+          >
+            History
+          </button>
         </nav>
       </div>
 
@@ -170,8 +177,15 @@ export default function App() {
               )}
             </div>
           </>
-        ) : (
+        ) : view === "knowledge" ? (
           <KnowledgeBase />
+        ) : (
+          <RunHistory
+            onSelectRun={(runId) => {
+              setSelectedRunId(runId);
+              setView("pipeline");
+            }}
+          />
         )}
       </div>
 
