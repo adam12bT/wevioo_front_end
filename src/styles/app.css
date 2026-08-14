@@ -193,7 +193,7 @@
   padding: 0;
   display: flex;
   align-items: flex-start;
-  max-width: 720px;
+  max-width: 980px;
 }
 
 .docket__item {
@@ -292,6 +292,15 @@
 
 .docket__label--blocked {
   color: var(--stamp-red);
+}
+
+.docket__meta {
+  margin-top: -4px;
+  color: var(--ink-400);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ------------------------------------------------------------------ */
@@ -430,6 +439,80 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px 22px;
   margin-bottom: 15px;
+}
+
+/* Document AI extraction and indexing summary */
+
+.processing-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 14px 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+}
+
+.processing-metric {
+  min-width: 0;
+  padding: 12px;
+  background: var(--paper-raised);
+}
+
+.processing-metric__label {
+  color: var(--ink-400);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.processing-metric__value {
+  margin-top: 4px;
+  color: var(--ink-900);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.processing-metric__detail {
+  margin-top: 2px;
+  color: var(--ink-400);
+  font-size: 10.5px;
+}
+
+.processing-flow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--paper-sunken);
+}
+
+.processing-flow__step {
+  color: var(--ink-400);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.processing-flow__step--active {
+  color: var(--stamp-blue);
+  font-weight: 600;
+}
+
+.processing-flow__step--done {
+  color: var(--stamp-green);
+  font-weight: 600;
+}
+
+.processing-flow__arrow {
+  color: var(--line-strong);
+  font-size: 12px;
 }
 
 .dash {

@@ -1,8 +1,7 @@
-// Backend base URL — comes from a Vite env var so it's swappable per
-// environment (local dev vs. the deployed HF Space) without code changes.
-// Falls back to "/api" for local dev if you're still proxying through
-// Vite's dev server (see vite.config.js note below).
-const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+// Use the agent-pipeline API, not the extractor or AnythingLLM directly.
+// Keep `/api` as the default when the frontend and backend share one host.
+const configuredBase = import.meta.env.VITE_API_BASE_URL?.trim();
+const BASE = (configuredBase || "/api").replace(/\/$/, "");
 
 async function handle(res) {
   if (!res.ok) {
