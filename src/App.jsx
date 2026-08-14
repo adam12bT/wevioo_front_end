@@ -70,9 +70,12 @@ export default function App() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [runDetail, setRunDetail] = useState(null);
   const [pipelineStages, setPipelineStages] = useState(DEFAULT_PIPELINE_STAGES);
+  const [capabilities, setCapabilities] = useState({});
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [tenderFile, setTenderFile] = useState(null);
+  const [templateFile, setTemplateFile] = useState(null);
 
   const pollRef = useRef(null);
 
@@ -80,8 +83,11 @@ export default function App() {
     let mounted = true;
     api
       .health()
-      .then(({ stages }) => {
-        if (mounted) setPipelineStages(normalizePipelineStages(stages));
+      .then(({ stages, capabilities: backendCapabilities }) => {
+        if (mounted) {
+          setPipelineStages(normalizePipelineStages(stages));
+          setCapabilities(backendCapabilities || {});
+        }
       })
       .catch(() => {
         if (mounted) setPipelineStages(DEFAULT_PIPELINE_STAGES);
@@ -124,12 +130,25 @@ export default function App() {
     return () => clearInterval(pollRef.current);
   }, [selectedRunId]);
 
-  const handleUploadFile = async (file) => {
+  const openUploadModal = () => {
+    setTenderFile(null);
+    setTemplateFile(null);
+    setUploadError(null);
+    setShowUploadModal(true);
+  };
+
+  const handleStartRun = async () => {
+    if (!tenderFile || !templateFile) {
+      setUploadError("Select both the tender and the response template.");
+      return;
+    }
     setUploading(true);
     setUploadError(null);
     try {
-      const { run_id } = await api.startRun(file);
+      const { run_id } = await api.startRun(tenderFile, templateFile);
       setShowUploadModal(false);
+      setTenderFile(null);
+      setTemplateFile(null);
       setSelectedRunId(run_id);
       setView("pipeline");
       api.listRuns().then(setRuns).catch(() => {});
@@ -149,8 +168,16 @@ export default function App() {
   const processingReport =
     state.document_processing || state.extraction_result || state.extractor_result || null;
   const processingIndexResult = state.index_result || processingReport?.index_result || null;
+  const templateProcessingReport = state.response_template_processing || null;
+  const templateProcessingIndexResult = templateProcessingReport?.index_result || null;
   const hasProcessingStage =
-    stageNames.includes("processing") || Boolean(processingReport || processingIndexResult);
+    stageNames.includes("processing") ||
+    Boolean(
+      processingReport ||
+        processingIndexResult ||
+        templateProcessingReport ||
+        templateProcessingIndexResult,
+    );
   const hasExtractionStage = stageNames.includes("extraction") || Object.hasOwn(state, "requirements");
   const hasResearchStage = stageNames.includes("research") || Object.hasOwn(state, "research_summary");
   const hasGenerationStage = stageNames.includes("generation") || Object.hasOwn(state, "draft_proposal");
@@ -158,7 +185,7 @@ export default function App() {
     stageNames.includes("security") || Object.hasOwn(state, "security_report");
   const hasQualityStage = stageNames.includes("quality") || Object.hasOwn(state, "quality_report");
   const genericEntries = Object.entries(state).filter(([key, value]) => {
-    if (["tender_file_path", "status", "generation_attempts", "errors", "verification_errors", "workspace_slug", "document_processing", "extraction_result", "extractor_result", "index_result", "requirements", "research_summary", "draft_proposal", "security_passed", "security_report", "quality_passed", "quality_report"].includes(key)) {
+    if (["tender_file_path", "response_template_file_path", "status", "generation_attempts", "errors", "verification_errors", "workspace_slug", "response_template_workspace_slug", "document_processing", "response_template_processing", "extraction_result", "extractor_result", "index_result", "requirements", "research_summary", "draft_proposal", "generation_evidence", "security_passed", "security_report", "quality_passed", "quality_report"].includes(key)) {
       return false;
     }
     return value !== undefined && value !== null && value !== "";
@@ -194,7 +221,7 @@ export default function App() {
               runs={runs}
               selectedRunId={selectedRunId}
               onSelect={setSelectedRunId}
-              onNewRun={() => setShowUploadModal(true)}
+              onNewRun={openUploadModal}
               uploading={uploading}
             />
 
@@ -206,6 +233,11 @@ export default function App() {
                     <div className="sheets__header">
                       <div>
                         <div className="eyebrow">{runDetail?.tender_filename}</div>
+                        {runDetail?.response_template_filename && (
+                          <div className="run-template-name">
+                            Template: {runDetail.response_template_filename}
+                          </div>
+                        )}
                         <h1 className="sheets__title">
                           {isRunActive
                             ? `Running — ${currentStageLabel}…`
@@ -228,15 +260,30 @@ export default function App() {
                     {runDetail?.run_status !== "blocked" && (
                       <>
                         {hasProcessingStage && (
-                          <DocumentProcessingPanel
-                            report={processingReport}
-                            indexResult={processingIndexResult}
-                            workspaceSlug={state.workspace_slug}
-                            isLoading={
-                              isRunActive &&
-                              (currentStage === "processing" || currentStage === "verifier")
-                            }
-                          />
+                          <>
+                            <DocumentProcessingPanel
+                              report={processingReport}
+                              indexResult={processingIndexResult}
+                              workspaceSlug={state.workspace_slug}
+                              documentLabel="Tender"
+                              tabIndex="00A"
+                              isLoading={
+                                isRunActive &&
+                                (currentStage === "processing" || currentStage === "verifier")
+                              }
+                            />
+                            <DocumentProcessingPanel
+                              report={templateProcessingReport}
+                              indexResult={templateProcessingIndexResult}
+                              workspaceSlug={state.response_template_workspace_slug}
+                              documentLabel="Response template"
+                              tabIndex="00B"
+                              isLoading={
+                                isRunActive &&
+                                (currentStage === "processing" || currentStage === "verifier")
+                              }
+                            />
+                          </>
                         )}
                         {hasExtractionStage && (
                           <RequirementsPanel
@@ -264,6 +311,7 @@ export default function App() {
                             report={state.security_report}
                             passed={state.security_passed}
                             isActive={isRunActive && currentStage === "security"}
+                            guardAvailable={capabilities.llm_guard_security}
                           />
                         )}
                         {hasQualityStage && (
@@ -272,6 +320,7 @@ export default function App() {
                             passed={state.quality_passed}
                             runStatus={runDetail?.run_status}
                             isActive={isRunActive && currentStage === "quality"}
+                            guardAvailable={capabilities.llm_guard_quality}
                           />
                         )}
                       </>
@@ -303,7 +352,7 @@ export default function App() {
                   </div>
                 </>
               ) : (
-                <EmptyState onNewRun={() => setShowUploadModal(true)} />
+                <EmptyState onNewRun={openUploadModal} />
               )}
             </div>
           </>
@@ -325,12 +374,40 @@ export default function App() {
                 ×
               </button>
             </div>
-            <UploadDropzone
-              onFile={handleUploadFile}
-              disabled={uploading}
-              label={uploading ? "Uploading for document AI processing…" : "Drop the tender PDF or DOCX here"}
-              sublabel="Bilingual OCR, table extraction, layout metadata and Qdrant indexing"
-            />
+            <p className="modal__lede">
+              Both documents are required. They are processed and indexed separately so template
+              instructions cannot be mistaken for tender requirements.
+            </p>
+            <div className="upload-pair">
+              <div>
+                <div className="field__label">1. Tender document</div>
+                <UploadDropzone
+                  onFile={setTenderFile}
+                  disabled={uploading}
+                  compact
+                  label={tenderFile?.name || "Select tender PDF or DOCX"}
+                  sublabel={tenderFile ? "Tender selected" : "Cahier des charges"}
+                />
+              </div>
+              <div>
+                <div className="field__label">2. Response template</div>
+                <UploadDropzone
+                  onFile={setTemplateFile}
+                  disabled={uploading}
+                  compact
+                  label={templateFile?.name || "Select template PDF or DOCX"}
+                  sublabel={templateFile ? "Template selected" : "Client or approved default template"}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn--primary modal__submit"
+              disabled={uploading || !tenderFile || !templateFile}
+              onClick={handleStartRun}
+            >
+              {uploading ? "Uploading and starting…" : "Start pipeline"}
+            </button>
             {uploadError && <div className="banner banner--alert">{uploadError}</div>}
           </div>
         </div>

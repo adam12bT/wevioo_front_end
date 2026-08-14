@@ -21,9 +21,10 @@ async function handle(res) {
 export const api = {
   health: () => fetch(`${BASE}/health`).then(handle),
 
-  startRun: (file) => {
+  startRun: (file, template) => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("template", template);
     return fetch(`${BASE}/runs`, { method: "POST", body: formData }).then(handle);
   },
 

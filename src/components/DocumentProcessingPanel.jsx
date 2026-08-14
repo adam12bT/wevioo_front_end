@@ -28,6 +28,8 @@ export default function DocumentProcessingPanel({
   indexResult,
   workspaceSlug,
   isLoading,
+  documentLabel = "Tender",
+  tabIndex = "00",
 }) {
   const result = normalizeProcessingResult(report, indexResult);
   const { metadata, pages, blocks, warnings, index } = result;
@@ -39,12 +41,12 @@ export default function DocumentProcessingPanel({
     return (
       <section className="sheet">
         <div className="sheet__tab">
-          <span className="sheet__tab-index">00</span>
+          <span className="sheet__tab-index">{tabIndex}</span>
           <span className="eyebrow">Document AI</span>
         </div>
         <div className="sheet__body">
           <div className="sheet__header">
-            <h2>Extracting and indexing the tender…</h2>
+            <h2>Extracting and indexing the {documentLabel.toLowerCase()}…</h2>
           </div>
           <p className="sheet__lede">
             Detecting native and scanned pages, running English/French OCR, recovering tables,
@@ -78,7 +80,7 @@ export default function DocumentProcessingPanel({
   return (
     <section className={`sheet ${failed ? "sheet--alert" : ""}`}>
       <div className="sheet__tab">
-        <span className="sheet__tab-index">00</span>
+        <span className="sheet__tab-index">{tabIndex}</span>
         <span className="eyebrow">Document AI</span>
       </div>
       <div className="sheet__body">
@@ -88,7 +90,7 @@ export default function DocumentProcessingPanel({
               {failed
                 ? "Document indexing failed"
                 : hasDetailedReport
-                  ? "Tender processed and indexed"
+                  ? `${documentLabel} processed and indexed`
                   : "AnythingLLM workspace ready"}
             </h2>
             <p className="sheet__lede">

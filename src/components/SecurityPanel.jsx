@@ -13,12 +13,13 @@ function labelFor(key) {
 }
 
 function formatValue(value) {
+  if (typeof value === "string") return value;
   return typeof value === "number" && !Number.isInteger(value)
     ? `risk ${value}`
     : `${value} found`;
 }
 
-export default function SecurityPanel({ report, passed, isActive }) {
+export default function SecurityPanel({ report, passed, isActive, guardAvailable }) {
   if (!report) {
     if (!isActive) return null;
     return (
@@ -53,6 +54,11 @@ export default function SecurityPanel({ report, passed, isActive }) {
         <span className="eyebrow">Security</span>
       </div>
       <div className="sheet__body">
+        {guardAvailable === false && (
+          <div className="banner banner--alert">
+            LLM Guard is unavailable on the backend. Full production scanning is not active.
+          </div>
+        )}
         <div className="sheet__header sheet__header--row">
           <h2>{blocked ? "Blocked on security scan" : "Security scan passed"}</h2>
           <span className={`pill ${blocked ? "pill--warn" : "pill--good"}`}>

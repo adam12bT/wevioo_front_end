@@ -61,6 +61,7 @@ export default function RequirementsPanel({ requirements, isLoading }) {
   }
 
   const deadlines = requirements.deadlines || {};
+  const responseTemplate = requirements.response_template || {};
 
   return (
     <section className="sheet">
@@ -96,9 +97,39 @@ export default function RequirementsPanel({ requirements, isLoading }) {
           <ListOrDash items={requirements.deliverables} />
         </Field>
 
+        <Field label="Mandatory requirements">
+          <ListOrDash items={requirements.mandatory_requirements} />
+        </Field>
+
+        <Field label="Technical constraints">
+          <ListOrDash items={requirements.technical_constraints} />
+        </Field>
+
+        <Field label="Contractual constraints">
+          <ListOrDash items={requirements.contractual_constraints} />
+        </Field>
+
         <Field label="Evaluation criteria">
           <ListOrDash items={requirements.evaluation_criteria} />
         </Field>
+
+        <div className="template-summary">
+          <div className="field__label">Response template rules</div>
+          <div className="field-grid">
+            <Field label="Required sections">
+              <ListOrDash items={responseTemplate.required_sections} />
+            </Field>
+            <Field label="Section order">
+              <ListOrDash items={responseTemplate.section_order} />
+            </Field>
+          </div>
+          <Field label="Template instructions">
+            <ListOrDash items={responseTemplate.instructions} />
+          </Field>
+          <Field label="Formatting requirements">
+            <ListOrDash items={responseTemplate.formatting_requirements} />
+          </Field>
+        </div>
       </div>
     </section>
   );
