@@ -22,26 +22,61 @@ function DownloadIcon() {
   );
 }
 
-export default function ProposalPanel({ draft, attempts, isLoading, runId }) {
-  const wordCount = useMemo(() => countWords(draft), [draft]);
+const STATUS_LABELS = {
+  waiting: "Waiting",
+  generating: "Generating",
+  complete: "Completed",
+  incomplete: "Needs content",
+};
 
-  if (!draft && !isLoading) return null;
+function templateSections(templateRules, progress) {
+  if (progress?.sections?.length) return progress.sections;
+  const titles = templateRules?.section_order || templateRules?.required_sections || [];
+  return titles.map((title) => ({ title, status: "waiting", content: "" }));
+}
+
+export default function ProposalPanel({
+  draft,
+  attempts,
+  isLoading,
+  runId,
+  templateRules,
+  templateFilename,
+  progress,
+}) {
+  const wordCount = useMemo(() => countWords(draft || progress?.draft), [draft, progress?.draft]);
+  const sections = useMemo(
+    () => templateSections(templateRules, progress),
+    [templateRules, progress],
+  );
+  const hasWorkspace = Boolean(draft || isLoading || sections.length);
+
+  if (!hasWorkspace) return null;
 
   return (
     <section className="sheet sheet--proposal">
       <div className="sheet__tab">
         <span className="sheet__tab-index">03</span>
-        <span className="eyebrow">Generation</span>
+        <span className="eyebrow">Live generation</span>
       </div>
 
       <div className="sheet__body">
-        <div className="sheet__header sheet__header--row" style={{ padding: "0 24px" }}>
+        <div className="sheet__header sheet__header--row proposal-header">
           <div>
-            <h2>Draft technical proposal</h2>
+            <h2>Template fill workspace</h2>
+            <p className="sheet__lede proposal-header__lede">
+              {templateFilename || "Uploaded response template"}
+            </p>
           </div>
           <div className="sheet__header-actions">
             {attempts > 1 && <span className="pill">Attempt {attempts}</span>}
-            {draft && !isLoading && (
+            {progress?.batch_count > 0 && (
+              <span className="pill">
+                Batch {Math.min(progress.batch_number || 1, progress.batch_count)}/
+                {progress.batch_count}
+              </span>
+            )}
+            {wordCount > 0 && (
               <span className="pill pill--muted">{wordCount.toLocaleString()} words</span>
             )}
             {draft && (
@@ -53,22 +88,68 @@ export default function ProposalPanel({ draft, attempts, isLoading, runId }) {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="skeleton-block" style={{ padding: "16px 24px 24px" }}>
-            <p className="sheet__lede" style={{ margin: "0 0 12px" }}>
-              Drafting the proposal using the tender requirements, research findings, and the
-              company's past proposals, CVs, and project references…
-            </p>
-            <div className="skeleton-line" style={{ width: "95%" }} />
-            <div className="skeleton-line" style={{ width: "88%" }} />
-            <div className="skeleton-line" style={{ width: "92%" }} />
-            <div className="skeleton-line" style={{ width: "60%" }} />
+        <div className="proposal-workspace">
+          <aside className="template-outline scrollbar-thin" aria-label="Template section outline">
+            <div className="template-outline__header">
+              <span className="eyebrow">Uploaded template</span>
+              <strong>{sections.length} required sections</strong>
+            </div>
+            <ol className="template-outline__list">
+              {sections.map((section, index) => (
+                <li
+                  key={`${section.title}-${index}`}
+                  className={`template-outline__item template-outline__item--${section.status}`}
+                >
+                  <span className="template-outline__index">
+                    {section.status === "complete" ? "✓" : index + 1}
+                  </span>
+                  <span className="template-outline__title">{section.title}</span>
+                  <span className="template-outline__status">
+                    {STATUS_LABELS[section.status] || section.status}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </aside>
+
+          <div className="live-document scrollbar-thin" aria-live="polite">
+            {sections.map((section, index) => (
+              <article
+                key={`${section.title}-content-${index}`}
+                className={`live-section live-section--${section.status}`}
+              >
+                <div className="live-section__status">
+                  <span className="live-section__dot" />
+                  {STATUS_LABELS[section.status] || section.status}
+                </div>
+                {section.content ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                ) : (
+                  <>
+                    <h2>{section.title}</h2>
+                    {section.status === "generating" ? (
+                      <div className="live-section__skeleton" aria-label="AI is filling this section">
+                        <div className="skeleton-line" style={{ width: "94%" }} />
+                        <div className="skeleton-line" style={{ width: "81%" }} />
+                        <div className="skeleton-line" style={{ width: "68%" }} />
+                      </div>
+                    ) : (
+                      <p className="live-section__placeholder">
+                        This section will be filled from tender and company evidence.
+                      </p>
+                    )}
+                  </>
+                )}
+              </article>
+            ))}
+
+            {!sections.length && isLoading && (
+              <div className="live-document__empty">
+                Reading the uploaded template and preparing its section outline…
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="paper scrollbar-thin" style={{ marginTop: 14 }}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft}</ReactMarkdown>
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

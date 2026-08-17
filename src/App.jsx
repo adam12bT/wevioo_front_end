@@ -185,7 +185,7 @@ export default function App() {
     stageNames.includes("security") || Object.hasOwn(state, "security_report");
   const hasQualityStage = stageNames.includes("quality") || Object.hasOwn(state, "quality_report");
   const genericEntries = Object.entries(state).filter(([key, value]) => {
-    if (["tender_file_path", "response_template_file_path", "status", "generation_attempts", "errors", "verification_errors", "workspace_slug", "response_template_workspace_slug", "document_processing", "response_template_processing", "extraction_result", "extractor_result", "index_result", "requirements", "research_summary", "draft_proposal", "generation_evidence", "security_passed", "security_report", "quality_passed", "quality_report"].includes(key)) {
+    if (["run_id", "tender_file_path", "response_template_file_path", "status", "generation_attempts", "errors", "verification_errors", "workspace_slug", "response_template_workspace_slug", "document_processing", "response_template_processing", "extraction_result", "extractor_result", "index_result", "requirements", "research_summary", "draft_proposal", "generation_evidence", "security_passed", "security_report", "quality_passed", "quality_report"].includes(key)) {
       return false;
     }
     return value !== undefined && value !== null && value !== "";
@@ -304,6 +304,9 @@ export default function App() {
                             attempts={state.generation_attempts}
                             runId={selectedRunId}
                             isLoading={isRunActive && currentStage === "generation"}
+                            templateRules={state.requirements?.response_template}
+                            templateFilename={runDetail?.response_template_filename}
+                            progress={runDetail?.generation_progress}
                           />
                         )}
                         {hasSecurityStage && (

@@ -10,7 +10,7 @@ rfp-pipeline/.env
 .venv
 # React frontend
 frontend/node_modules/
-frontend/distgit add 
+dist/
 node_modules
 # AnythingLLM server
 anything-llm-lightweight/node_modules/
