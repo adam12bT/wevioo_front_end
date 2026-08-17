@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "../api.js";
@@ -44,12 +44,34 @@ export default function ProposalPanel({
   templateFilename,
   progress,
 }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [followAI, setFollowAI] = useState(true);
+  const documentRef = useRef(null);
+  const sectionRefs = useRef([]);
   const wordCount = useMemo(() => countWords(draft || progress?.draft), [draft, progress?.draft]);
   const sections = useMemo(
     () => templateSections(templateRules, progress),
     [templateRules, progress],
   );
   const hasWorkspace = Boolean(draft || isLoading || sections.length);
+  const completedCount = sections.filter((section) => section.status === "complete").length;
+  const progressPercent = sections.length
+    ? Math.round((completedCount / sections.length) * 100)
+    : 0;
+  const generatingIndex = sections.findIndex((section) => section.status === "generating");
+
+  const moveToSection = (index) => {
+    setActiveIndex(index);
+    const container = documentRef.current;
+    const target = sectionRefs.current[index];
+    if (container && target) {
+      container.scrollTo({ top: Math.max(0, target.offsetTop - 22), behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    if (followAI && generatingIndex >= 0) moveToSection(generatingIndex);
+  }, [followAI, generatingIndex]);
 
   if (!hasWorkspace) return null;
 
@@ -88,6 +110,48 @@ export default function ProposalPanel({
           </div>
         </div>
 
+        <div className="generation-toolbar">
+          <div className="generation-toolbar__summary">
+            <span className={`generation-orb ${isLoading ? "generation-orb--active" : ""}`}>✦</span>
+            <div>
+              <strong>
+                {isLoading
+                  ? `AI is drafting ${
+                      generatingIndex >= 0 ? sections[generatingIndex]?.title : "the proposal"
+                    }`
+                  : completedCount === sections.length && sections.length
+                    ? "Proposal draft completed"
+                    : "Template ready for generation"}
+              </strong>
+              <span>
+                {completedCount} of {sections.length} sections completed
+              </span>
+            </div>
+          </div>
+          <div className="generation-toolbar__meter">
+            <div
+              className="generation-progress"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={progressPercent}
+              aria-label="Proposal generation progress"
+            >
+              <span style={{ width: `${progressPercent}%` }} />
+            </div>
+            <strong>{progressPercent}%</strong>
+          </div>
+          <button
+            type="button"
+            className={`follow-toggle ${followAI ? "follow-toggle--active" : ""}`}
+            aria-pressed={followAI}
+            onClick={() => setFollowAI((value) => !value)}
+          >
+            <span className="follow-toggle__dot" />
+            Follow AI
+          </button>
+        </div>
+
         <div className="proposal-workspace">
           <aside className="template-outline scrollbar-thin" aria-label="Template section outline">
             <div className="template-outline__header">
@@ -96,27 +160,38 @@ export default function ProposalPanel({
             </div>
             <ol className="template-outline__list">
               {sections.map((section, index) => (
-                <li
-                  key={`${section.title}-${index}`}
-                  className={`template-outline__item template-outline__item--${section.status}`}
-                >
-                  <span className="template-outline__index">
-                    {section.status === "complete" ? "✓" : index + 1}
-                  </span>
-                  <span className="template-outline__title">{section.title}</span>
-                  <span className="template-outline__status">
-                    {STATUS_LABELS[section.status] || section.status}
-                  </span>
+                <li key={`${section.title}-${index}`}>
+                  <button
+                    type="button"
+                    onClick={() => moveToSection(index)}
+                    className={`template-outline__item template-outline__item--${section.status} ${
+                      activeIndex === index ? "template-outline__item--active" : ""
+                    }`}
+                  >
+                    <span className="template-outline__index">
+                      {section.status === "complete" ? "✓" : index + 1}
+                    </span>
+                    <span className="template-outline__title">{section.title}</span>
+                    <span className="template-outline__status">
+                      {STATUS_LABELS[section.status] || section.status}
+                    </span>
+                  </button>
                 </li>
               ))}
             </ol>
           </aside>
 
-          <div className="live-document scrollbar-thin" aria-live="polite">
+          <div ref={documentRef} className="live-document scrollbar-thin" aria-live="polite">
             {sections.map((section, index) => (
               <article
+                ref={(node) => {
+                  sectionRefs.current[index] = node;
+                }}
                 key={`${section.title}-content-${index}`}
-                className={`live-section live-section--${section.status}`}
+                className={`live-section live-section--${section.status} ${
+                  activeIndex === index ? "live-section--active" : ""
+                }`}
+                onClick={() => setActiveIndex(index)}
               >
                 <div className="live-section__status">
                   <span className="live-section__dot" />
