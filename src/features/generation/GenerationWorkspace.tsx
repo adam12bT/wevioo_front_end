@@ -30,40 +30,83 @@ const SECTION_STATUS_ICONS: Record<GenerationSectionStatus, LucideIcon> = {
   failed: AlertCircle,
 };
 
+const MIN_SECTION_BODY_WORDS = 12;
+
+function repairMojibake(value: string): string {
+  const replacements: Record<string, string> = {
+    'â€‘': '‑', 'â€“': '–', 'â€”': '—', 'â€™': '’', 'â€œ': '“', 'â€': '”',
+    'â€¦': '…', 'â‰¤': '≤', 'â‰¥': '≥', 'â‚¬': '€', 'Ã€': 'À', 'Ã‰': 'É',
+    'Ã©': 'é', 'Ã¨': 'è', 'Ãª': 'ê', 'Ã ': 'à', 'Ã§': 'ç', 'Â ': '\u00a0',
+  };
+  return Object.entries(replacements).reduce(
+    (text, [broken, replacement]) => text.split(broken).join(replacement),
+    value,
+  );
+}
+
+function bodyWordCount(value: string): number {
+  return value.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)?.length || 0;
+}
+
+function cleanLiveSection(section: GenerationSection): GenerationSection {
+  const lines = repairMojibake(section.content || '').split('\n');
+  const firstHeading = lines[0]?.match(/^\s{0,3}#{1,6}\s+(.+)$/);
+  if (firstHeading) lines.shift();
+
+  // Old backend versions could append the next template heading to this card.
+  const nextPeerHeading = lines.findIndex((line) => /^\s{0,3}#{1,2}\s+/.test(line));
+  const content = (nextPeerHeading >= 0 ? lines.slice(0, nextPeerHeading) : lines)
+    .join('\n')
+    .trim();
+  const status: GenerationSectionStatus = section.status === 'complete' && bodyWordCount(content) < MIN_SECTION_BODY_WORDS
+    ? 'incomplete'
+    : section.status;
+  return { ...section, content, status };
+}
+
 /**
  * Splits a markdown document by headings and returns sections matching template structure.
  * Fallback when live generation progress is unavailable but draft_proposal exists.
  */
 function splitMarkdownByHeadings(markdown: string): GenerationSection[] {
-  const lines = markdown.split('\n');
+  const lines = repairMojibake(markdown).split('\n');
   const sections: GenerationSection[] = [];
-  let currentTitle = 'Introduction';
+  let currentTitle: string | null = null;
   let currentContent: string[] = [];
 
+  const pushCurrent = () => {
+    if (!currentTitle) return;
+    const content = currentContent.join('\n').trim();
+    sections.push({
+      title: currentTitle,
+      status: bodyWordCount(content) >= MIN_SECTION_BODY_WORDS ? 'complete' : 'incomplete',
+      content,
+    });
+  };
+
   for (const line of lines) {
-    const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
+    const headingMatch = line.match(/^\s{0,3}(#{1,2})\s+(.+)$/);
     if (headingMatch) {
-      if (currentContent.length > 0) {
-        sections.push({
-          title: currentTitle,
-          status: 'complete',
-          content: currentContent.join('\n').trim(),
-        });
-      }
+      pushCurrent();
       currentTitle = headingMatch[2].trim();
       currentContent = [];
-    } else {
+    } else if (currentTitle) {
       currentContent.push(line);
     }
   }
-  if (currentContent.length > 0) {
-    sections.push({
-      title: currentTitle,
-      status: 'complete',
-      content: currentContent.join('\n').trim(),
-    });
+  pushCurrent();
+
+  // Prefer the most substantive occurrence when a malformed older draft
+  // contains the same template heading more than once.
+  const deduplicated = new Map<string, GenerationSection>();
+  for (const section of sections) {
+    const key = section.title.trim().toLocaleLowerCase();
+    const previous = deduplicated.get(key);
+    if (!previous || bodyWordCount(section.content || '') > bodyWordCount(previous.content || '')) {
+      deduplicated.set(key, section);
+    }
   }
-  return sections;
+  return [...deduplicated.values()];
 }
 
 export function GenerationWorkspace({ job }: GenerationWorkspaceProps) {
@@ -75,16 +118,21 @@ export function GenerationWorkspace({ job }: GenerationWorkspaceProps) {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Determine sections source: live progress > fallback from draft
+  // Live progress is best while generation is running. Once the upstream run
+  // is terminal, the assembled draft is authoritative and may include repairs.
   const sections = useMemo<GenerationSection[]>(() => {
-    if (progress?.sections && progress.sections.length > 0) {
-      return progress.sections;
-    }
-    if (job.draft_proposal) {
+    const isTerminal = Boolean(
+      job.status && ['completed', 'failed', 'blocked', 'warning'].includes(job.status),
+    );
+    if (isTerminal && job.draft_proposal) {
       return splitMarkdownByHeadings(job.draft_proposal);
     }
+    if (progress?.sections && progress.sections.length > 0) {
+      return progress.sections.map(cleanLiveSection);
+    }
+    if (job.draft_proposal) return splitMarkdownByHeadings(job.draft_proposal);
     return [];
-  }, [progress, job.draft_proposal]);
+  }, [progress, job.draft_proposal, job.status]);
 
   const hasLiveProgress = (progress?.sections?.length || 0) > 0;
   const completedCount = sections.filter((s) => s.status === 'complete').length;

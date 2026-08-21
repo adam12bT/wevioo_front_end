@@ -153,6 +153,8 @@ export interface QualityInfo {
   required_sections?: string[];
   missing_sections?: string[];
   out_of_order_sections?: string[];
+  duplicate_sections?: string[];
+  incomplete_sections?: string[];
   failed_sections?: string[];
   groundedness_score?: number;
   groundedness_threshold?: number;

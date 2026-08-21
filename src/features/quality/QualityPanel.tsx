@@ -93,6 +93,8 @@ export function QualityPanel({ quality }: { quality?: QualityInfo }) {
         <StringList title="Required sections" items={quality.required_sections} variant="neutral" />
         <StringList title="Missing sections" items={quality.missing_sections} variant="warning" />
         <StringList title="Out-of-order sections" items={quality.out_of_order_sections} variant="warning" />
+        <StringList title="Duplicate sections" items={quality.duplicate_sections} variant="warning" />
+        <StringList title="Sections without substantive content" items={quality.incomplete_sections} variant="danger" />
         <StringList title="Failed sections" items={quality.failed_sections} variant="danger" />
       </div>
 

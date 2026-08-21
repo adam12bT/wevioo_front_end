@@ -317,6 +317,8 @@ function normalizeQuality(
     required_sections: stringList(report.required_sections),
     missing_sections: stringList(report.missing_sections),
     out_of_order_sections: stringList(report.out_of_order_sections),
+    duplicate_sections: stringList(report.duplicate_sections),
+    incomplete_sections: stringList(report.incomplete_sections),
     failed_sections: stringList(report.failed_sections),
     groundedness_score: numericValue(review.groundedness_score),
     groundedness_threshold: numericValue(report.groundedness_threshold),
