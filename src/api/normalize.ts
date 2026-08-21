@@ -226,6 +226,7 @@ function normalizeProcessingReport(value: unknown) {
 function normalizeRequirements(requirements: Record<string, unknown>) {
   const deadlines = asRecord(requirements.deadlines);
   const template = asRecord(requirements.response_template);
+  const templateInstructions = stringList(template.instructions) ?? [];
   return {
     ...requirements,
     submission_deadline:
@@ -233,8 +234,8 @@ function normalizeRequirements(requirements: Record<string, unknown>) {
     project_duration:
       stringValue(requirements.project_duration) || stringValue(deadlines.project_duration),
     response_template_rules:
-      stringList(template.instructions).length > 0
-        ? stringList(template.instructions)
+      templateInstructions.length > 0
+        ? templateInstructions
         : stringList(template.template_instructions),
     template_source: stringValue(template.template_source),
     template_version: stringValue(template.version),
