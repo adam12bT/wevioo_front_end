@@ -1,6 +1,9 @@
 const STATUS_STYLES = {
   queued: { label: "Queued", tone: "slate" },
+  submitting: { label: "Submitting", tone: "amber" },
   running: { label: "Running", tone: "amber" },
+  evaluating: { label: "Evaluating", tone: "amber" },
+  cancelled: { label: "Cancelled", tone: "slate" },
   blocked: { label: "Blocked", tone: "rust" },
   security_blocked: { label: "Security review", tone: "rust" },
   failed: { label: "Failed", tone: "rust" },

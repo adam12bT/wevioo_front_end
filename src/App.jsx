@@ -10,10 +10,11 @@ import ResearchPanel from "./components/ResearchPanel.jsx";
 import ProposalPanel from "./components/ProposalPanel.jsx";
 import SecurityPanel from "./components/SecurityPanel.jsx";
 import QualityPanel from "./components/QualityPanel.jsx";
+import WorkerEvaluationPanel from "./components/WorkerEvaluationPanel.jsx";
 import KnowledgeBase from "./components/KnowledgeBase.jsx";
 import UploadDropzone from "./components/UploadDropzone.jsx";
 
-const ACTIVE_STATUSES = new Set(["queued", "running"]);
+const ACTIVE_STATUSES = new Set(["queued", "submitting", "running", "evaluating"]);
 const DEFAULT_PIPELINE_STAGES = [
   "verifier",
   "processing",
@@ -32,6 +33,9 @@ const STAGE_LABELS = {
   generation: "proposal generation",
   security: "security review",
   quality: "quality review",
+  evaluation: "pipeline evaluation",
+  evaluation_complete: "evaluation complete",
+  submitting: "submitting to agent pipeline",
 };
 
 function normalizePipelineStages(stages) {
@@ -76,6 +80,10 @@ export default function App() {
   const [uploadError, setUploadError] = useState(null);
   const [tenderFile, setTenderFile] = useState(null);
   const [templateFile, setTemplateFile] = useState(null);
+  const [evaluationFile, setEvaluationFile] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   const pollRef = useRef(null);
 
@@ -130,9 +138,29 @@ export default function App() {
     return () => clearInterval(pollRef.current);
   }, [selectedRunId]);
 
+  // SSE delivers immediate worker progress. Polling remains as a fallback for
+  // browser reconnects and sleeping free-tier deployments.
+  useEffect(() => {
+    if (!selectedRunId || (runDetail && !ACTIVE_STATUSES.has(runDetail.run_status))) {
+      return undefined;
+    }
+    const refresh = () => {
+      api.getRun(selectedRunId).then(setRunDetail).catch(() => {});
+      api.listRuns().then(setRuns).catch(() => {});
+    };
+    return api.subscribeToRun(selectedRunId, refresh, () => {});
+  }, [selectedRunId, runDetail?.run_status]);
+
+  useEffect(() => {
+    setVersions([]);
+    if (!selectedRunId || !runDetail?.document_version) return;
+    api.listVersions(selectedRunId).then(setVersions).catch(() => setVersions([]));
+  }, [selectedRunId, runDetail?.document_version]);
+
   const openUploadModal = () => {
     setTenderFile(null);
     setTemplateFile(null);
+    setEvaluationFile(null);
     setUploadError(null);
     setShowUploadModal(true);
   };
@@ -145,11 +173,12 @@ export default function App() {
     setUploading(true);
     setUploadError(null);
     try {
-      const { run_id } = await api.startRun(tenderFile, templateFile);
+      const { job_id } = await api.startRun(tenderFile, templateFile, evaluationFile);
       setShowUploadModal(false);
       setTenderFile(null);
       setTemplateFile(null);
-      setSelectedRunId(run_id);
+      setEvaluationFile(null);
+      setSelectedRunId(job_id);
       setView("pipeline");
       api.listRuns().then(setRuns).catch(() => {});
     } catch (e) {
@@ -159,10 +188,48 @@ export default function App() {
     }
   };
 
+  const refreshSelectedRun = async () => {
+    if (!selectedRunId) return;
+    const [detail, nextRuns] = await Promise.all([
+      api.getRun(selectedRunId),
+      api.listRuns(),
+    ]);
+    setRunDetail(detail);
+    setRuns(nextRuns);
+  };
+
+  const handleCancel = async () => {
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await api.cancelRun(selectedRunId);
+      await refreshSelectedRun();
+    } catch (error) {
+      setActionError(error.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleRerun = async () => {
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await api.rerunRun(selectedRunId);
+      setVersions([]);
+      await refreshSelectedRun();
+    } catch (error) {
+      setActionError(error.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const state = runDetail?.state || {};
   const isRunActive = ACTIVE_STATUSES.has(runDetail?.run_status);
   const currentStage = runDetail?.current_stage;
   const currentStageLabel = STAGE_LABELS[currentStage] || currentStage || "starting";
+  const isEvaluating = runDetail?.run_status === "evaluating" || currentStage === "evaluation";
   const stageNames = normalizePipelineStages(pipelineStages);
   const hasVerifierStage = stageNames.includes("verifier") || Object.hasOwn(state, "verification_errors");
   const processingReport =
@@ -244,8 +311,36 @@ export default function App() {
                             : "Run summary"}
                         </h1>
                       </div>
-                      <StatusBadge status={runDetail?.run_status} />
+                      <div className="worker-run-actions">
+                        {runDetail?.document_version && (
+                          <span className="pill pill--good">V{runDetail.document_version}</span>
+                        )}
+                        <StatusBadge status={runDetail?.run_status} />
+                        {isRunActive ? (
+                          <button
+                            type="button"
+                            className="btn btn--secondary"
+                            disabled={actionBusy}
+                            onClick={handleCancel}
+                          >
+                            Cancel
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn--secondary"
+                            disabled={actionBusy || !runDetail}
+                            onClick={handleRerun}
+                          >
+                            {actionBusy ? "Starting…" : "Generate next version"}
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {actionError && (
+                      <div className="banner banner--alert worker-action-error">{actionError}</div>
+                    )}
 
                     {runDetail?.error && (
                       <div className="banner banner--alert" style={{ width: "100%", maxWidth: "var(--doc-width)", marginBottom: 18 }}>
@@ -303,6 +398,7 @@ export default function App() {
                             draft={state.draft_proposal}
                             attempts={state.generation_attempts}
                             runId={selectedRunId}
+                            downloadReady={Boolean(runDetail?.document_version)}
                             isLoading={isRunActive && currentStage === "generation"}
                             templateRules={state.requirements?.response_template}
                             templateFilename={runDetail?.response_template_filename}
@@ -328,6 +424,14 @@ export default function App() {
                         )}
                       </>
                     )}
+
+                    <WorkerEvaluationPanel
+                      evaluation={runDetail?.evaluation_results}
+                      isActive={isEvaluating}
+                      jobId={selectedRunId}
+                      documentVersion={runDetail?.document_version}
+                      versions={versions}
+                    />
 
                     {!hasVerifierStage && !hasProcessingStage && !hasExtractionStage && !hasResearchStage && !hasGenerationStage && !hasSecurityStage && !hasQualityStage && genericEntries.length > 0 && (
                       <section className="sheet">
@@ -400,6 +504,17 @@ export default function App() {
                   compact
                   label={templateFile?.name || "Select template PDF or DOCX"}
                   sublabel={templateFile ? "Template selected" : "Client or approved default template"}
+                />
+              </div>
+              <div className="upload-pair__optional">
+                <div className="field__label">3. Labelled RAG dataset (optional)</div>
+                <UploadDropzone
+                  onFile={setEvaluationFile}
+                  accept=".json,application/json"
+                  disabled={uploading}
+                  compact
+                  label={evaluationFile?.name || "Select evaluation JSON"}
+                  sublabel={evaluationFile ? "Dataset selected" : "Enables precision and recall metrics"}
                 />
               </div>
             </div>

@@ -40,6 +40,7 @@ export default function ProposalPanel({
   attempts,
   isLoading,
   runId,
+  downloadReady,
   templateRules,
   templateFilename,
   progress,
@@ -101,7 +102,7 @@ export default function ProposalPanel({
             {wordCount > 0 && (
               <span className="pill pill--muted">{wordCount.toLocaleString()} words</span>
             )}
-            {draft && (
+            {draft && downloadReady && (
               <a className="btn btn--download" href={api.downloadUrl(runId)} download>
                 <DownloadIcon />
                 Download .md
