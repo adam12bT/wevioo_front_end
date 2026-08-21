@@ -232,7 +232,12 @@ function normalizeRequirements(requirements: Record<string, unknown>) {
       stringValue(requirements.submission_deadline) || stringValue(deadlines.submission_deadline),
     project_duration:
       stringValue(requirements.project_duration) || stringValue(deadlines.project_duration),
-    response_template_rules: stringList(template.template_instructions),
+    response_template_rules:
+      stringList(template.instructions).length > 0
+        ? stringList(template.instructions)
+        : stringList(template.template_instructions),
+    template_source: stringValue(template.template_source),
+    template_version: stringValue(template.version),
     required_sections: stringList(template.required_sections),
     required_section_order: stringList(template.section_order),
     formatting_instructions: stringList(template.formatting_requirements),

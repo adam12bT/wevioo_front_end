@@ -75,12 +75,14 @@ export async function fetchJob(jobId: string): Promise<Job> {
 
 export async function createJob(files: {
   file: File;
-  template: File;
+  template?: File | null;
   evaluation_dataset?: File | null;
 }): Promise<Job> {
   const form = new FormData();
   form.append('file', files.file);
-  form.append('template', files.template);
+  if (files.template) {
+    form.append('template', files.template);
+  }
   if (files.evaluation_dataset) {
     form.append('evaluation_dataset', files.evaluation_dataset);
   }

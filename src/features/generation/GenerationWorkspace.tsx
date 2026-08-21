@@ -115,7 +115,7 @@ export function GenerationWorkspace({ job }: GenerationWorkspaceProps) {
       <EmptyState
         icon={FileText}
         title="No generation data yet"
-        description="The live proposal will appear here as the AI fills the response template section by section."
+        description="The live proposal will appear here as the AI fills the selected proposal structure section by section."
       />
     );
   }
@@ -132,10 +132,10 @@ export function GenerationWorkspace({ job }: GenerationWorkspaceProps) {
           <div className="flex items-center gap-3">
             <Sparkles className="h-5 w-5 text-teal-500" />
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Live Template Filling</h3>
+              <h3 className="text-sm font-semibold text-slate-800">Live Proposal Generation</h3>
               <p className="text-xs text-slate-500">
                 {hasLiveProgress
-                  ? 'AI is filling the response template in real time'
+                  ? 'AI is filling the selected proposal structure in real time'
                   : 'Displaying completed draft proposal'}
               </p>
             </div>

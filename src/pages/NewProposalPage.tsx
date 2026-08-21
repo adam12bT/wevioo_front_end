@@ -5,7 +5,7 @@ import { FileUploader } from '@/components/FileUploader';
 import { useToast } from '@/context/ToastContext';
 import { createJob, ApiError } from '@/api/client';
 
-const STEPS = ['Upload Tender', 'Upload Template', 'Evaluation Dataset', 'Review & Launch'] as const;
+const STEPS = ['Upload Tender', 'Response Structure', 'Evaluation Dataset', 'Review & Launch'] as const;
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -51,23 +51,23 @@ export function NewProposalPage() {
       case 0:
         return tenderFile !== null && !tenderError;
       case 1:
-        return templateFile !== null && !templateError;
+        return !templateError;
       case 2:
         return true; // optional
       case 3:
-        return tenderFile !== null && templateFile !== null;
+        return tenderFile !== null;
       default:
         return false;
     }
   };
 
   const handleSubmit = async () => {
-    if (!tenderFile || !templateFile) return;
+    if (!tenderFile) return;
     setSubmitting(true);
     try {
       const job = await createJob({
         file: tenderFile,
-        template: templateFile,
+        template: templateFile || undefined,
         evaluation_dataset: evalDataset || undefined,
       });
       showToast('Job submitted successfully', 'success');
@@ -89,7 +89,7 @@ export function NewProposalPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-slate-900">New Proposal</h2>
-        <p className="mt-1 text-sm text-slate-500">Upload your tender and response template to start the AI generation pipeline.</p>
+        <p className="mt-1 text-sm text-slate-500">Upload a tender and optionally provide the client's response template.</p>
       </div>
 
       {/* Stepper */}
@@ -138,13 +138,12 @@ export function NewProposalPage() {
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-base font-semibold text-slate-800">Step 2: Upload Response Template</h3>
-              <p className="mt-1 text-sm text-slate-500">Upload the template that the AI will fill in section by section.</p>
+              <h3 className="text-base font-semibold text-slate-800">Step 2: Response Template (Optional)</h3>
+              <p className="mt-1 text-sm text-slate-500">Upload the client's template when one exists. Otherwise, the pipeline uses its versioned general proposal structure.</p>
             </div>
             <FileUploader
               label="Response Template"
-              description="The structured template the AI will populate with proposal content."
-              required
+              description="Optional PDF or DOCX. Leave empty to use the built-in default template."
               file={templateFile}
               error={templateError}
               onFileSelected={handleTemplateSelected}
@@ -184,7 +183,7 @@ export function NewProposalPage() {
             </div>
             <div className="space-y-2 rounded-lg bg-slate-50 p-4">
               <ReviewRow label="Tender Document" file={tenderFile} required />
-              <ReviewRow label="Response Template" file={templateFile} required />
+              <ReviewRow label="Response Template" file={templateFile} />
               <ReviewRow label="Evaluation Dataset" file={evalDataset} />
             </div>
             <div className="flex items-start gap-2.5 rounded-lg bg-teal-50 border border-teal-200 p-3">

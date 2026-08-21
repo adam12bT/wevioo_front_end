@@ -86,6 +86,10 @@ export interface TenderRequirements {
   mandatory_requirements?: string[];
   technical_constraints?: string[];
   contractual_constraints?: string[];
+  domain_specific_constraints?: string[];
+  required_evidence?: string[];
+  required_forms?: string[];
+  additional_requirements?: string[];
   budget?: string;
   submission_deadline?: string;
   project_duration?: string;
@@ -94,6 +98,8 @@ export interface TenderRequirements {
   required_sections?: string[];
   required_section_order?: string[];
   formatting_instructions?: string[];
+  template_source?: string;
+  template_version?: string;
 }
 
 export interface ResearchSource {
@@ -237,7 +243,7 @@ export interface Job {
   created_at?: string | number;
   updated_at?: string | number;
   tender_filename?: string;
-  template_filename?: string;
+  template_filename?: string | null;
   progress?: GenerationProgress | number | null;
   pipeline?: PipelineState;
   upstream_state?: {

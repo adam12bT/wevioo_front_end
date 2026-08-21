@@ -247,7 +247,7 @@ export function JobWorkspacePage() {
         <MetaItem label="Created" value={formatDateTime(job.created_at)} />
         <MetaItem label="Updated" value={formatDateTime(job.updated_at)} />
         <MetaItem label="Duration" value={formatDuration(job.duration)} />
-        <MetaItem label="Template" value={job.template_filename || '—'} />
+        <MetaItem label="Template" value={job.template_filename || 'Built-in default'} />
         <div className="space-y-0.5">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Progress</p>
           <div className="flex items-center gap-2">

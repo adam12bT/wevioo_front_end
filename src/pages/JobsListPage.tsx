@@ -142,7 +142,7 @@ export function JobsListPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-2.5 max-w-[160px] truncate text-slate-700">{job.tender_filename || '—'}</td>
-                    <td className="px-4 py-2.5 max-w-[160px] truncate text-slate-700">{job.template_filename || '—'}</td>
+                    <td className="px-4 py-2.5 max-w-[160px] truncate text-slate-700">{job.template_filename || 'Built-in default'}</td>
                     <td className="px-4 py-2.5">
                       <JobStatusBadge status={job.status || 'queued'} />
                     </td>

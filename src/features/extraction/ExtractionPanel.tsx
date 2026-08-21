@@ -21,6 +21,10 @@ export function ExtractionPanel({ extraction }: { extraction?: TenderRequirement
     { key: 'mandatory_requirements', label: 'Mandatory Requirements' },
     { key: 'technical_constraints', label: 'Technical Constraints' },
     { key: 'contractual_constraints', label: 'Contractual Constraints' },
+    { key: 'domain_specific_constraints', label: 'Domain-specific Constraints' },
+    { key: 'required_evidence', label: 'Required Evidence' },
+    { key: 'required_forms', label: 'Required Forms and Schedules' },
+    { key: 'additional_requirements', label: 'Additional Requirements' },
     { key: 'evaluation_criteria', label: 'Evaluation Criteria' },
     { key: 'response_template_rules', label: 'Response Template Rules' },
     { key: 'required_sections', label: 'Required Sections' },
@@ -33,6 +37,8 @@ export function ExtractionPanel({ extraction }: { extraction?: TenderRequirement
     { key: 'budget', label: 'Budget' },
     { key: 'submission_deadline', label: 'Submission Deadline' },
     { key: 'project_duration', label: 'Project Duration' },
+    { key: 'template_source', label: 'Template Source' },
+    { key: 'template_version', label: 'Template Version' },
   ];
 
   return (
