@@ -46,13 +46,18 @@ function normalizeJobSummary(job) {
 
 function normalizeJobDetail(job) {
   const state = job.upstream_state || {};
+  // The worker stores the upstream `generation_progress` object directly in
+  // `job.progress`. Older worker responses wrapped it in `{ generation: ... }`,
+  // so accept both formats while preferring the live upstream state.
+  const generationProgress =
+    state.generation_progress || job.progress?.generation || job.progress || null;
   return {
     ...job,
     run_id: job.job_id,
     run_status: job.status,
     response_template_filename: job.template_filename,
     state,
-    generation_progress: state.generation_progress || job.progress?.generation || null,
+    generation_progress: generationProgress,
   };
 }
 
