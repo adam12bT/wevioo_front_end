@@ -365,10 +365,14 @@ function normalizeEvaluation(value: unknown) {
     rag: {
       precision,
       recall,
-      f1:
+      f1: numericValue(rag.f1_score) ?? (
         precision != null && recall != null && precision + recall > 0
           ? (2 * precision * recall) / (precision + recall)
-          : undefined,
+          : undefined),
+      context_relevance: numericValue(rag.context_relevance),
+      context_utilization: numericValue(rag.context_utilization),
+      evaluation_mode: stringValue(rag.evaluation_mode),
+      method: stringValue(rag.method),
       relevant_chunks: Array.isArray(rag.cases)
         ? rag.cases.reduce((sum: number, item: unknown) => {
             const ids = asRecord(item).relevant_chunk_ids;
@@ -388,6 +392,8 @@ function normalizeEvaluation(value: unknown) {
               query: stringValue(record.query) || stringValue(record.section),
               precision: numericValue(record.precision_at_k),
               recall: numericValue(record.recall_at_k),
+              context_relevance: numericValue(record.context_relevance),
+              context_utilization: numericValue(record.context_utilization),
               relevant_chunks: Array.isArray(record.relevant_chunk_ids) ? record.relevant_chunk_ids.length : undefined,
               retrieved_chunks: Array.isArray(record.retrieved_chunk_ids) ? record.retrieved_chunk_ids.length : undefined,
             };

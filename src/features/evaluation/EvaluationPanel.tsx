@@ -22,11 +22,25 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
         <div className="flex items-center gap-2 mb-3">
           <Gauge className="h-5 w-5 text-teal-500" />
           <h4 className="text-sm font-semibold text-slate-800">RAG Quality</h4>
+          {evaluation.rag?.evaluation_mode && (
+            <span className="ml-auto rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
+              {evaluation.rag.evaluation_mode === 'automatic_proxy'
+                ? 'Automatic proxy'
+                : 'Labelled ground truth'}
+            </span>
+          )}
         </div>
         <div className="space-y-3">
           <ScoreBar value={evaluation.rag?.precision} label="Precision" />
           <ScoreBar value={evaluation.rag?.recall} label="Recall" />
           <ScoreBar value={evaluation.rag?.f1} label="F1 Score" />
+          <ScoreBar value={evaluation.rag?.context_relevance} label="Context Relevance" />
+          <ScoreBar value={evaluation.rag?.context_utilization} label="Context Utilization" />
+          {evaluation.rag?.method && (
+            <p className="rounded-lg bg-slate-50 p-2 text-xs leading-relaxed text-slate-500">
+              {evaluation.rag.method}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
             <div>
               <span className="text-slate-500">Relevant chunks: </span>
@@ -48,6 +62,8 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
                     <th className="py-1.5 pr-3">Query</th>
                     <th className="py-1.5 pr-3">Precision</th>
                     <th className="py-1.5 pr-3">Recall</th>
+                    <th className="py-1.5 pr-3">Relevance</th>
+                    <th className="py-1.5 pr-3">Utilization</th>
                     <th className="py-1.5">Chunks</th>
                   </tr>
                 </thead>
@@ -57,6 +73,8 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
                       <td className="py-1.5 pr-3 max-w-xs truncate text-slate-700">{qr.query || '—'}</td>
                       <td className="py-1.5 pr-3">{formatPercent(qr.precision)}</td>
                       <td className="py-1.5 pr-3">{formatPercent(qr.recall)}</td>
+                      <td className="py-1.5 pr-3">{formatPercent(qr.context_relevance)}</td>
+                      <td className="py-1.5 pr-3">{formatPercent(qr.context_utilization)}</td>
                       <td className="py-1.5 text-slate-600">{qr.retrieved_chunks ?? '—'}/{qr.relevant_chunks ?? '—'}</td>
                     </tr>
                   ))}

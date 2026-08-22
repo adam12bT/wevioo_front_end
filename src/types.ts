@@ -174,6 +174,8 @@ export interface RagQueryResult {
   query?: string;
   precision?: number;
   recall?: number;
+  context_relevance?: number;
+  context_utilization?: number;
   relevant_chunks?: number;
   retrieved_chunks?: number;
 }
@@ -182,6 +184,10 @@ export interface RagEvaluation {
   precision?: number;
   recall?: number;
   f1?: number;
+  context_relevance?: number;
+  context_utilization?: number;
+  evaluation_mode?: 'automatic_proxy' | 'labelled_ground_truth' | string;
+  method?: string;
   relevant_chunks?: number;
   retrieved_chunks?: number;
   query_results?: RagQueryResult[];
