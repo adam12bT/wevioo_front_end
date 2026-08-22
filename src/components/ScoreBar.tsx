@@ -17,7 +17,7 @@ function getColor(pct: number, threshold?: number | null): string {
   return 'bg-rose-500';
 }
 
-export function ScoreBar({ value, threshold, label, showValue = true, max = 100 }: ScoreBarProps) {
+export function ScoreBar({ value, threshold, label, showValue = true, max = 1 }: ScoreBarProps) {
   if (value == null || isNaN(value)) {
     return (
       <div className="space-y-1">
