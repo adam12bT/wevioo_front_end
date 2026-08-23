@@ -91,6 +91,7 @@ function PipelineHealthSummary({ health }: { health: HealthResponse | null }) {
     { label: 'Redis', data: health.redis },
     { label: 'Celery Queue', data: health.celery_queue },
     { label: 'Agent Pipeline', data: health.agent_pipeline },
+    { label: 'Document Extractor', data: health.extractor },
     { label: 'Database', data: health.database },
     { label: 'Storage', data: health.storage },
   ];

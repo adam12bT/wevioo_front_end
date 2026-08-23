@@ -301,6 +301,8 @@ export interface HealthComponent {
   message?: string;
   provider?: string;
   ready?: boolean;
+  configured?: boolean;
+  endpoint?: string;
 }
 
 export interface HealthResponse {
@@ -308,6 +310,7 @@ export interface HealthResponse {
   redis?: HealthComponent;
   celery_queue?: HealthComponent;
   agent_pipeline?: HealthComponent;
+  extractor?: HealthComponent;
   database?: HealthComponent;
   storage?: HealthComponent;
   errors?: string[] | Record<string, string>;

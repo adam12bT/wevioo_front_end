@@ -104,6 +104,7 @@ export function SystemHealthPage() {
             <ComponentCard label="Redis" component={health.redis} />
             <ComponentCard label="Celery Queue" component={health.celery_queue} />
             <ComponentCard label="Agent Pipeline" component={health.agent_pipeline} />
+            <ComponentCard label="Document Extractor" component={health.extractor} />
             <ComponentCard label="Database" component={health.database} />
             <ComponentCard label="Object Storage" component={health.storage} />
           </div>

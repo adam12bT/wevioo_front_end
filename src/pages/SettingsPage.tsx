@@ -4,6 +4,7 @@ import { API } from '@/api/urls';
 export function SettingsPage() {
   const workerUrl = API.worker;
   const agentUrl = API.agent;
+  const extractorUrl = API.extractor;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -59,12 +60,34 @@ export function SettingsPage() {
             </div>
             <p className="mt-1 text-xs text-slate-400">Manages the company knowledge base.</p>
           </div>
+
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Extractor API URL</label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                readOnly
+                value={extractorUrl || 'Not configured'}
+                className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 font-mono"
+              />
+              {extractorUrl && (
+                <a
+                  href={`${extractorUrl}/health`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-slate-400">Extracts OCR, tables, layout metadata, and indexes document chunks.</p>
+          </div>
         </div>
 
         <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-blue-50 border border-blue-200 p-3">
           <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
           <p className="text-xs text-blue-800">
-            These URLs are configured via environment variables (<code className="font-mono">VITE_WORKER_API_URL</code> and <code className="font-mono">VITE_AGENT_API_BASE_URL</code>). Update the <code className="font-mono">.env</code> file and restart the dev server to change them.
+            These URLs are configured via environment variables (<code className="font-mono">VITE_WORKER_API_URL</code>, <code className="font-mono">VITE_AGENT_API_BASE_URL</code>, and <code className="font-mono">VITE_EXTRACTOR_API_URL</code>). Update the <code className="font-mono">.env</code> file and restart the dev server to change them.
           </p>
         </div>
       </div>

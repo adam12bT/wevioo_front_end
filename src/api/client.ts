@@ -156,11 +156,52 @@ export async function fetchHealth(): Promise<HealthResponse> {
     ready,
     provider,
   });
+
+  let extractor: HealthResponse['extractor'];
+  if (!API.extractor) {
+    extractor = {
+      status: 'unknown',
+      ready: false,
+      configured: false,
+      message: 'Set VITE_EXTRACTOR_API_URL to monitor this service.',
+    };
+  } else {
+    try {
+      const extractorRaw = await fetchJson<Record<string, unknown>>(API.extractorHealth(), {
+        cache: 'no-store',
+      });
+      const extractorStatus = String(extractorRaw.status || '').toLowerCase();
+      const extractorReady = extractorRaw.ok === true
+        || extractorRaw.ready === true
+        || ['ok', 'healthy', 'ready'].includes(extractorStatus);
+      extractor = {
+        status: extractorReady ? 'healthy' : 'unhealthy',
+        ready: extractorReady,
+        configured: true,
+        provider: 'document extractor',
+        endpoint: API.extractorHealth(),
+        message: typeof extractorRaw.message === 'string' ? extractorRaw.message : undefined,
+      };
+    } catch (err) {
+      extractor = {
+        status: 'unhealthy',
+        ready: false,
+        configured: true,
+        provider: 'document extractor',
+        endpoint: API.extractorHealth(),
+        message: err instanceof Error ? err.message : 'Extractor health request failed.',
+      };
+    }
+  }
+
+  const workerReady = raw.ok === true;
+  const overallReady = workerReady && (extractor.configured !== true || extractor.ready === true);
   return {
-    status: raw.ok === true ? 'healthy' : 'unhealthy',
+    status: overallReady ? 'healthy' : 'unhealthy',
     redis: component(raw.redis === true),
     celery_queue: component(raw.redis === true, String(raw.celery_queue || 'unknown')),
     agent_pipeline: component(raw.pipeline === true),
+    extractor,
     database: component(database.ready === true, String(database.provider || 'unknown')),
     storage: component(storage.ready === true, String(storage.provider || 'unknown')),
     errors,
