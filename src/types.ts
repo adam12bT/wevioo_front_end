@@ -151,6 +151,8 @@ export interface QualityInfo {
   status?: string;
   word_count?: number;
   required_sections?: string[];
+  present_sections?: string[];
+  passed_sections?: string[];
   missing_sections?: string[];
   out_of_order_sections?: string[];
   duplicate_sections?: string[];

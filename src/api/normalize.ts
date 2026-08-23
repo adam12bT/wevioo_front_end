@@ -316,6 +316,8 @@ function normalizeQuality(
     status: state.quality_passed === true ? 'passed' : 'failed',
     word_count: numericValue(report.word_count),
     required_sections: stringList(report.required_sections),
+    present_sections: stringList(report.present_sections),
+    passed_sections: stringList(report.passed_sections),
     missing_sections: stringList(report.missing_sections),
     out_of_order_sections: stringList(report.out_of_order_sections),
     duplicate_sections: stringList(report.duplicate_sections),

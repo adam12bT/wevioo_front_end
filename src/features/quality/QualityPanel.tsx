@@ -90,7 +90,9 @@ export function QualityPanel({ quality }: { quality?: QualityInfo }) {
       {/* Section compliance */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
         <h4 className="text-sm font-semibold text-slate-700">Section Compliance</h4>
-        <StringList title="Required sections" items={quality.required_sections} variant="neutral" />
+        <StringList title="Expected template sections" items={quality.required_sections} variant="neutral" />
+        <StringList title="Generated sections" items={quality.present_sections} variant="neutral" />
+        <StringList title="Passed sections" items={quality.passed_sections} variant="success" />
         <StringList title="Missing sections" items={quality.missing_sections} variant="warning" />
         <StringList title="Out-of-order sections" items={quality.out_of_order_sections} variant="warning" />
         <StringList title="Duplicate sections" items={quality.duplicate_sections} variant="warning" />
@@ -140,11 +142,12 @@ function StringList({
 }: {
   title: string;
   items?: string[];
-  variant: 'neutral' | 'warning' | 'danger';
+  variant: 'neutral' | 'success' | 'warning' | 'danger';
 }) {
   if (!items || items.length === 0) return null;
   const colors = {
     neutral: 'border-slate-200 bg-white text-slate-700',
+    success: 'border-emerald-200 bg-emerald-50/50 text-emerald-700',
     warning: 'border-amber-200 bg-amber-50/50 text-amber-700',
     danger: 'border-rose-200 bg-rose-50/50 text-rose-700',
   };
