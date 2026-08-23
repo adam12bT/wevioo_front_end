@@ -31,8 +31,14 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
           )}
         </div>
         <div className="space-y-3">
-          <ScoreBar value={evaluation.rag?.precision} label="Precision" />
-          <ScoreBar value={evaluation.rag?.recall} label="Recall" />
+          <ScoreBar
+            value={evaluation.rag?.precision}
+            label={evaluation.rag?.evaluation_mode === 'automatic_proxy' ? 'Candidate Precision Proxy' : 'Precision'}
+          />
+          <ScoreBar
+            value={evaluation.rag?.recall}
+            label={evaluation.rag?.evaluation_mode === 'automatic_proxy' ? 'Candidate Recall Proxy' : 'Recall'}
+          />
           <ScoreBar value={evaluation.rag?.f1} label="F1 Score" />
           <ScoreBar value={evaluation.rag?.context_relevance} label="Context Relevance" />
           <ScoreBar value={evaluation.rag?.context_utilization} label="Context Utilization" />
@@ -41,7 +47,15 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
               {evaluation.rag.method}
             </p>
           )}
-          <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
+          <div className="grid grid-cols-2 gap-3 pt-2 text-sm sm:grid-cols-4">
+            <div>
+              <span className="text-slate-500">Candidate chunks: </span>
+              <span className="font-semibold text-slate-800">{formatNumber(evaluation.rag?.candidate_chunks)}</span>
+            </div>
+            <div>
+              <span className="text-slate-500">Chunks used: </span>
+              <span className="font-semibold text-slate-800">{formatNumber(evaluation.rag?.used_chunks)}</span>
+            </div>
             <div>
               <span className="text-slate-500">Relevant chunks: </span>
               <span className="font-semibold text-slate-800">{formatNumber(evaluation.rag?.relevant_chunks)}</span>
@@ -64,7 +78,7 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
                     <th className="py-1.5 pr-3">Recall</th>
                     <th className="py-1.5 pr-3">Relevance</th>
                     <th className="py-1.5 pr-3">Utilization</th>
-                    <th className="py-1.5">Chunks</th>
+                    <th className="py-1.5">Used / candidates</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -75,7 +89,7 @@ export function EvaluationPanel({ evaluation }: { evaluation?: Evaluation }) {
                       <td className="py-1.5 pr-3">{formatPercent(qr.recall)}</td>
                       <td className="py-1.5 pr-3">{formatPercent(qr.context_relevance)}</td>
                       <td className="py-1.5 pr-3">{formatPercent(qr.context_utilization)}</td>
-                      <td className="py-1.5 text-slate-600">{qr.retrieved_chunks ?? '—'}/{qr.relevant_chunks ?? '—'}</td>
+                      <td className="py-1.5 text-slate-600">{qr.used_chunks ?? '—'}/{qr.candidate_chunks ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

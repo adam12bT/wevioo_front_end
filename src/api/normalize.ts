@@ -341,8 +341,8 @@ function normalizeEvaluation(value: unknown) {
   const rag = asRecord(evaluation.rag);
   const output = asRecord(evaluation.output);
   const performance = asRecord(evaluation.performance);
-  const precision = numericValue(rag.precision_at_k);
-  const recall = numericValue(rag.recall_at_k);
+  const precision = numericValue(rag.candidate_precision_proxy) ?? numericValue(rag.precision_at_k);
+  const recall = numericValue(rag.candidate_recall_proxy) ?? numericValue(rag.recall_at_k);
   const durationMap = asRecord(
     Object.keys(asRecord(performance.exact_agent_duration_seconds)).length
       ? performance.exact_agent_duration_seconds
@@ -373,6 +373,26 @@ function normalizeEvaluation(value: unknown) {
       context_utilization: numericValue(rag.context_utilization),
       evaluation_mode: stringValue(rag.evaluation_mode),
       method: stringValue(rag.method),
+      candidate_chunks: numericValue(rag.candidate_chunk_count) ?? (
+        Array.isArray(rag.cases)
+          ? rag.cases.reduce((sum: number, item: unknown) => {
+              const record = asRecord(item);
+              const count = numericValue(record.candidate_chunk_count);
+              const ids = record.candidate_chunk_ids;
+              return sum + (count ?? (Array.isArray(ids) ? ids.length : 0));
+            }, 0)
+          : undefined
+      ),
+      used_chunks: numericValue(rag.used_chunk_count) ?? (
+        Array.isArray(rag.cases)
+          ? rag.cases.reduce((sum: number, item: unknown) => {
+              const record = asRecord(item);
+              const count = numericValue(record.used_chunk_count);
+              const ids = record.used_chunk_ids;
+              return sum + (count ?? (Array.isArray(ids) ? ids.length : 0));
+            }, 0)
+          : undefined
+      ),
       relevant_chunks: Array.isArray(rag.cases)
         ? rag.cases.reduce((sum: number, item: unknown) => {
             const ids = asRecord(item).relevant_chunk_ids;
@@ -389,11 +409,18 @@ function normalizeEvaluation(value: unknown) {
         ? rag.cases.map((item: unknown) => {
             const record = asRecord(item);
             return {
-              query: stringValue(record.query) || stringValue(record.section),
-              precision: numericValue(record.precision_at_k),
-              recall: numericValue(record.recall_at_k),
+              query: stringValue(record.section) || stringValue(record.query),
+              section: stringValue(record.section),
+              precision: numericValue(record.candidate_precision_proxy) ?? numericValue(record.precision_at_k),
+              recall: numericValue(record.candidate_recall_proxy) ?? numericValue(record.recall_at_k),
               context_relevance: numericValue(record.context_relevance),
               context_utilization: numericValue(record.context_utilization),
+              candidate_chunks: numericValue(record.candidate_chunk_count) ?? (
+                Array.isArray(record.candidate_chunk_ids) ? record.candidate_chunk_ids.length : undefined
+              ),
+              used_chunks: numericValue(record.used_chunk_count) ?? (
+                Array.isArray(record.used_chunk_ids) ? record.used_chunk_ids.length : undefined
+              ),
               relevant_chunks: Array.isArray(record.relevant_chunk_ids) ? record.relevant_chunk_ids.length : undefined,
               retrieved_chunks: Array.isArray(record.retrieved_chunk_ids) ? record.retrieved_chunk_ids.length : undefined,
             };

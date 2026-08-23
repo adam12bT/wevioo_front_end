@@ -172,10 +172,13 @@ export interface QualityInfo {
 
 export interface RagQueryResult {
   query?: string;
+  section?: string;
   precision?: number;
   recall?: number;
   context_relevance?: number;
   context_utilization?: number;
+  candidate_chunks?: number;
+  used_chunks?: number;
   relevant_chunks?: number;
   retrieved_chunks?: number;
 }
@@ -188,6 +191,8 @@ export interface RagEvaluation {
   context_utilization?: number;
   evaluation_mode?: 'automatic_proxy' | 'labelled_ground_truth' | string;
   method?: string;
+  candidate_chunks?: number;
+  used_chunks?: number;
   relevant_chunks?: number;
   retrieved_chunks?: number;
   query_results?: RagQueryResult[];
