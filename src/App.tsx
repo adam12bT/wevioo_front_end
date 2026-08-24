@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { wakeHostedSpaces } from '@/api/wakeSpaces';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { NewProposalPage } from '@/pages/NewProposalPage';
@@ -11,6 +13,10 @@ import { SystemHealthPage } from '@/pages/SystemHealthPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
 function App() {
+  useEffect(() => {
+    wakeHostedSpaces();
+  }, []);
+
   return (
     <BrowserRouter>
       <DashboardLayout>

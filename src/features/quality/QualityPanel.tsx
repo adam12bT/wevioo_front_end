@@ -108,7 +108,9 @@ export function QualityPanel({ quality }: { quality?: QualityInfo }) {
             <div className="min-w-0">
               <h4 className="text-sm font-semibold text-amber-800">Supporting evidence required</h4>
               <p className="mt-1 text-xs text-amber-700">
-                These disclosed placeholders are warnings only. They do not lower quality scores or fail a section.
+                The placeholder itself is not a hallucination and does not lower groundedness. Missing CVs and
+                supporting documents are still evaluated and must be supplied before submission; any unsupported
+                claim about experience, personnel, or certification can still fail quality.
               </p>
               <ul className="mt-2 space-y-2">
                 {quality.evidence_warnings.map((warning, index) => (
