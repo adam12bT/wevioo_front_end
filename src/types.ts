@@ -147,6 +147,12 @@ export interface SecurityInfo {
   notes?: string[];
 }
 
+export interface EvidenceWarning {
+  section?: string;
+  placeholder_count?: number;
+  message?: string;
+}
+
 export interface QualityInfo {
   status?: string;
   word_count?: number;
@@ -165,6 +171,7 @@ export interface QualityInfo {
   unsupported_claims?: string[];
   contradictions?: string[];
   coherence_issues?: string[];
+  evidence_warnings?: EvidenceWarning[];
   evaluator_available?: boolean;
   evaluator_errors?: string[];
   review_notes?: string[];

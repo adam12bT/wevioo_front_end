@@ -100,6 +100,32 @@ export function QualityPanel({ quality }: { quality?: QualityInfo }) {
         <StringList title="Failed sections" items={quality.failed_sections} variant="danger" />
       </div>
 
+      {/* Non-blocking evidence gaps */}
+      {quality.evidence_warnings && quality.evidence_warnings.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-amber-800">Supporting evidence required</h4>
+              <p className="mt-1 text-xs text-amber-700">
+                These disclosed placeholders are warnings only. They do not lower quality scores or fail a section.
+              </p>
+              <ul className="mt-2 space-y-2">
+                {quality.evidence_warnings.map((warning, index) => (
+                  <li key={`${warning.section || 'evidence'}-${index}`} className="text-xs text-amber-800">
+                    <span className="font-semibold">{warning.section || 'Proposal evidence'}</span>
+                    {warning.placeholder_count != null && (
+                      <span> ({warning.placeholder_count} placeholder{warning.placeholder_count === 1 ? '' : 's'})</span>
+                    )}
+                    {warning.message && <span>: {warning.message}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Issues */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
         <h4 className="text-sm font-semibold text-slate-700">Quality Issues</h4>

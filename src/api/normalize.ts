@@ -191,6 +191,21 @@ function stringList(value: unknown): string[] | undefined {
   });
 }
 
+function evidenceWarningList(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  return value
+    .map((item) => {
+      const warning = asRecord(item);
+      if (!Object.keys(warning).length) return undefined;
+      return {
+        section: stringValue(warning.section),
+        placeholder_count: numericValue(warning.placeholder_count),
+        message: stringValue(warning.message),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
 function normalizeProcessingReport(value: unknown) {
   const report = asRecord(value);
   if (!Object.keys(report).length) return undefined;
@@ -330,6 +345,7 @@ function normalizeQuality(
     unsupported_claims: stringList(review.unsupported_claims),
     contradictions: stringList(review.contradictions),
     coherence_issues: stringList(review.coherence_issues),
+    evidence_warnings: evidenceWarningList(report.evidence_warnings),
     evaluator_available: report.evaluation_available !== false,
     evaluator_errors: report.evaluator_error ? [String(report.evaluator_error)] : undefined,
     review_notes: stringList(report.notes),
